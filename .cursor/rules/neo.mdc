@@ -1,0 +1,134 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+I want to you to help me build my own game engine from scratch that its core functionality is to support simulations:
+- World generation should be large scale, like the size of the earth (possibly using real world data),
+- High fidelity 3D graphics are less important (consider Minecraft or Zelda),
+- World entities (NPC's) should be highly programable and customizable,
+- Behavior trees/models should also support complex hierarchies, overrides, and data processing,
+- NPC's and/or NPC's types/categories should function as independent agents, that have the capacity to learn over time from the environment, and interactions with other NPC's.
+- As an engine, AI LLM support should be considered foundational in the creation, editing, and customization of all game creation.
+
+Longer term functionality: 
+- Ability for players to join the simulation (perhaps as core functionality)
+- Ability to export for desktop and mobile devices.
+
+Project Plan:
+
+### 🎮 Engine Core Philosophy:  
+**Simulation-first, Agent-centric, AI-augmented**
+
+---
+
+### ✅ Key Tech Stack Decisions
+
+| Subsystem | Decision |
+|----------|----------|
+| **Language** | **Rust** (safe, performant, modern concurrency) – good fit for async, ECS, and high control. Use **Python** (via embedded scripting or API) for agent logic, LLM tooling, and fast iteration. |
+| **Graphics** | **Bevy** ECS-based Rust engine for prototyping and 2D/3D rendering. It's data-driven, has async systems, and gives us modularity for future scaling. |
+| **World Format** | **Hex-tile-based 2D+height simulation**, expandable to 3D voxel terrain. Real-world data can be sampled into this later. |
+| **Agent Behavior** | Agents use modular **behavior graphs + learning modules**, editable via natural language and scripts. Stored as data (JSON, YAML) or graph formats. |
+| **LLM Backend** | Local (Ollama, LLaMA) or remote (OpenAI) LLMs used for natural language editing, runtime prompt parsing, and behavior modification. |
+| **Data Storage** | Lightweight: JSON or SQLite for agent memory and world chunks. Later: Graph DB (Neo4j) for agent memory networks. |
+| **UI/Dev Tools** | In-engine debug console + optional TUI or web panel for dev inspection. Think StarCraft map editor meets ChatGPT. |
+| **Multithreading/Async** | Actor-like async agent model using Rust `tokio`, Bevy ECS tasks, or message queues for agent isolation. |
+| **Optional IDE Tooling** | Integrate Cursor + LLMs for rapid behavior scripting and in-editor simulation scripts (highly AI-augmented). |
+
+---
+
+## 📌 Phase 1: Milestone-Based Project Plan
+
+Each milestone builds on the last. We’ll build the simulation skeleton, one intelligent step at a time.
+
+---
+
+### 🛠️ **Milestone 1: Core Engine Skeleton (Simulation Kernel)**
+
+> 🚧 Build the basic async tick-based engine loop with agent processing.
+
+**Components**:
+- Rust project setup with Bevy (ECS + scheduling)
+- World tick loop (fixed timestep)
+- Agent struct with: `id`, `position`, `memory`, `tick()` method
+- Simple message-passing or job scheduling system
+- Logging + basic CLI control
+
+🔜 *Goal*: Watch agents "tick" and log thoughts.
+
+---
+
+### 🌍 **Milestone 2: World System (Chunked Hex-Terrain)**
+
+> 🌱 Create an infinite, chunked, procedural hex map with basic terrain features.
+
+**Components**:
+- Hex-grid system with axial coordinates
+- Chunk streaming and unloading
+- Perlin/Simplex noise-based terrain generation
+- Biome layer: water, plains, forest, mountains
+- In-editor dev viewer (rendered in Bevy)
+
+🔜 *Goal*: Wander a massive, loading world map.
+
+---
+
+### 🧠 **Milestone 3: Agent Behavior Model v0 (Rules + Knowledge)**
+
+> 🤖 Create simple agents that follow rules like "walk to forest" or "collect water".
+
+**Components**:
+- Basic behavior trees or decision rules (JSON or YAML)
+- Agent memory/knowledge struct (local graph or key-value store)
+- Action execution model (walk, observe, store memory)
+- Behavior execution pipeline (rule → plan → act)
+
+🔜 *Goal*: Agents react to terrain and make decisions.
+
+---
+
+### 🗣️ **Milestone 4: LLM Integration for Behavior Editing**
+
+> 🤯 Integrate a prompt system where devs (you) can modify NPC logic via natural language.
+
+**Components**:
+- API wrapper for OpenAI or local LLM
+- In-game or dev console interface:
+```text
+> Change Mara's goals to "explore the nearby mountain"
+```
+- Translate prompt → modify agent memory/behavior_tree
+
+🔜 *Goal*: Live natural language world editing + debugging.
+
+---
+
+### 🔄 **Milestone 5: Learning & Knowledge Sharing**
+
+> 🧬 Let agents build knowledge over time and optionally share or evolve it.
+
+**Components**:
+- Expand memory graph to track experience
+- Learning module: e.g. prefer forests if hunting succeeds there
+- Agent-to-agent communication (gossip, teaching)
+- Optional graph storage (Neo4j or lightweight RDF-style struct)
+
+🔜 *Goal*: Emergent strategy from past experience.
+
+---
+
+### 🌐 **Milestone 6: Interface, Persistence, and Expansion**
+
+> 🧱 Build dev tools, serialization, and prepare for multiplayer or mobile export.
+
+**Components**:
+- Dev console for inspecting agents + world
+- Save/load engine state
+- Modular world & agent loader
+- Optional remote agent brains (microservices?)
+
+🔜 *Goal*: Sim like Dwarf Fortress, LLM-native tools, save/load + expand.

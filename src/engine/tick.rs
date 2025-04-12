@@ -22,7 +22,7 @@ pub fn agent_tick_system(
         .collect();
     
     // Create messages without modifying agents
-    for (i, (entity, agent_id, agent_name)) in agent_info.iter().enumerate() {
+    for (i, (_entity, agent_id, agent_name)) in agent_info.iter().enumerate() {
         if !agent_info.is_empty() {
             let next_idx = (i + 1) % agent_info.len();
             let next_agent_id = agent_info[next_idx].1;

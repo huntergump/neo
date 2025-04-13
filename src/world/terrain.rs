@@ -1,136 +1,44 @@
 use bevy::prelude::*;
-use noise::{NoiseFn, Perlin};
-use super::hex::HexCoord;
-use super::chunk::{Chunk, Biome, CHUNK_SIZE};
+use crate::world::chunk::{LoadedChunks, Chunk, Tile};
 
-#[derive(Resource)]
+/// Resource for terrain generation configuration
+#[derive(Resource, Debug, Clone)]
 pub struct TerrainGenerator {
-    noise: Perlin,
-    scale: f64,
-    octaves: i32,
-    persistence: f64,
-    // Biome thresholds
-    ocean_threshold: f32,
-    plains_threshold: f32,
-    forest_threshold: f32,
+    pub seed: u32,
+    pub scale: f32,
+    pub octaves: u32,
+    pub persistence: f32,
+    pub lacunarity: f32,
 }
 
-impl TerrainGenerator {
-    pub fn new(seed: u32) -> Self {
+impl Default for TerrainGenerator {
+    fn default() -> Self {
         Self {
-            noise: Perlin::new(seed),
-            scale: 0.01,
+            seed: 42,
+            scale: 50.0,
             octaves: 4,
             persistence: 0.5,
-            ocean_threshold: 0.2,
-            plains_threshold: 0.4,
-            forest_threshold: 0.7,
-        }
-    }
-    
-    /// Create a terrain generator with custom parameters
-    pub fn with_params(
-        seed: u32,
-        scale: f64,
-        octaves: i32,
-        persistence: f64,
-        ocean_threshold: f32,
-        plains_threshold: f32,
-        forest_threshold: f32,
-    ) -> Self {
-        Self {
-            noise: Perlin::new(seed),
-            scale,
-            octaves,
-            persistence,
-            ocean_threshold,
-            plains_threshold,
-            forest_threshold,
-        }
-    }
-
-    pub fn generate_elevation(&self, coord: &HexCoord) -> f32 {
-        let mut elevation = 0.0;
-        let mut amplitude = 1.0;
-        let mut frequency = self.scale;
-        let mut max_value = 0.0;
-
-        for _ in 0..self.octaves {
-            let x = coord.q as f64 * frequency;
-            let y = coord.r as f64 * frequency;
-            
-            elevation += amplitude * self.noise.get([x, y]) as f64;
-            max_value += amplitude;
-            
-            amplitude *= self.persistence;
-            frequency *= 2.0;
-        }
-
-        // Normalize to 0-1 range
-        elevation = (elevation / max_value + 1.0) / 2.0;
-        
-        elevation as f32
-    }
-    
-    pub fn get_biome(&self, elevation: f32) -> Biome {
-        if elevation < self.ocean_threshold {
-            Biome::Ocean
-        } else if elevation < self.plains_threshold {
-            Biome::Plains
-        } else if elevation < self.forest_threshold {
-            Biome::Forest
-        } else {
-            Biome::Mountains
-        }
-    }
-    
-    /// Generate terrain for a specific chunk
-    pub fn generate_chunk_terrain(&self, chunk: &mut Chunk) {
-        for q in 0..CHUNK_SIZE {
-            for r in 0..CHUNK_SIZE {
-                // Calculate the hex coordinates for this tile within the chunk
-                // Use checked arithmetic to prevent overflow
-                let hex_q = match chunk.coord.x.checked_mul(CHUNK_SIZE) {
-                    Some(q_base) => match q_base.checked_add(q) {
-                        Some(q_val) => q_val,
-                        None => continue, // Skip this tile if there's an overflow
-                    },
-                    None => continue, // Skip this tile if there's an overflow
-                };
-                
-                let hex_r = match chunk.coord.y.checked_mul(CHUNK_SIZE) {
-                    Some(r_base) => match r_base.checked_add(r) {
-                        Some(r_val) => r_val,
-                        None => continue, // Skip this tile if there's an overflow
-                    },
-                    None => continue, // Skip this tile if there's an overflow
-                };
-                
-                let hex = HexCoord::new(hex_q, hex_r);
-                
-                let elevation = self.generate_elevation(&hex);
-                let biome = self.get_biome(elevation);
-                
-                chunk.tiles.insert(hex, super::chunk::Tile { elevation, biome });
-            }
+            lacunarity: 2.0,
         }
     }
 }
 
-// System to generate terrain for chunks
+/// System for generating terrain
 pub fn terrain_generation_system(
-    mut chunks: Query<&mut Chunk>,
-    generator: Res<TerrainGenerator>,
+    _commands: Commands,
+    _terrain_gen: Res<TerrainGenerator>,
+    _loaded_chunks: ResMut<LoadedChunks>,
 ) {
-    for mut chunk in chunks.iter_mut() {
-        if !chunk.is_loaded {
-            continue;
-        }
+    // Implementation will go here
+    // This will use the TerrainGenerator to create terrain for new chunks
+}
 
-        for (hex, tile) in chunk.tiles.iter_mut() {
-            let elevation = generator.generate_elevation(hex);
-            tile.elevation = elevation;
-            tile.biome = generator.get_biome(elevation);
-        }
-    }
+/// System for managing terrain features
+pub fn terrain_system(
+    _commands: Commands,
+    _time: Res<Time>,
+    _query: Query<(&Chunk, &mut Tile)>,
+) {
+    // Implementation will go here
+    // This will handle terrain updates, erosion, etc.
 } 

@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     pub from: Uuid,
     pub to: Uuid,

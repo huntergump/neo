@@ -37,13 +37,15 @@ pub fn agent_tick_system(
         
         match result {
             Ok(_) => {
-                // Send tick completed event
-                tick_events.send(AgentTickCompleted {
-                    agent_id: agent.id,
-                    agent_name: agent.name.clone(),
-                    tick_count: agent.tick_count,
-                    duration_ms: duration,
-                });
+                // Only send tick completed event every 100 ticks to reduce event spam
+                if agent.tick_count % 100 == 0 {
+                    tick_events.send(AgentTickCompleted {
+                        agent_id: agent.id,
+                        agent_name: agent.name.clone(),
+                        tick_count: agent.tick_count,
+                        duration_ms: duration,
+                    });
+                }
                 
                 // Log if tick took too long
                 if duration > 16.0 { // More than 1 frame at 60 FPS
@@ -98,11 +100,20 @@ fn generate_messages_for_all_agents(
                 current_time,
             );
             
+            // Only send message to the next agent in the ring
             messages_to_send.push((agent_info[next_idx].0, message));
         }
     }
     
     messages_to_send
+}
+
+/// System that clears agent tick events to prevent memory leaks
+pub fn clear_agent_tick_events(
+    mut events: ResMut<Events<AgentTickCompleted>>,
+) {
+    // Clear all events after they've been processed
+    events.clear();
 }
 
 #[cfg(test)]

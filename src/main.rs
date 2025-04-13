@@ -5,13 +5,14 @@ mod world;
 use bevy::prelude::*;
 use world::chunk::{WorldSeed, LoadedChunks, chunk_loading_system, setup_world, ChunkLoaded, ChunkUnloaded};
 use world::terrain::{TerrainGenerator, terrain_generation_system};
-use engine::tick::{agent_tick_system, AgentTickCompleted};
+use engine::tick::{agent_tick_system, AgentTickCompleted, clear_agent_tick_events};
 use agents::agent::spawn_agents;
 use std::collections::HashMap;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::window::WindowMode;
 use bevy::window::WindowResolution;
 use engine::{update_time_system, WeatherPlugin};
+use crate::engine::memory::MemoryProfilingPlugin;
 
 /// System sets for organizing simulation systems
 /// 
@@ -50,6 +51,16 @@ impl Default for SimulationConfig {
     }
 }
 
+/// System for managing memory and preventing leaks
+fn memory_management_system(
+    mut chunk_loaded_events: ResMut<Events<ChunkLoaded>>,
+    mut chunk_unloaded_events: ResMut<Events<ChunkUnloaded>>,
+) {
+    // Clear events after they've been processed
+    chunk_loaded_events.clear();
+    chunk_unloaded_events.clear();
+}
+
 fn main() {
     // Create a single instance of the config to reuse
     let config = SimulationConfig::default();
@@ -67,6 +78,7 @@ fn main() {
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(WeatherPlugin)
+        .add_plugins(MemoryProfilingPlugin)
         .add_event::<ChunkLoaded>()
         .add_event::<ChunkUnloaded>()
         .add_event::<AgentTickCompleted>()
@@ -92,6 +104,10 @@ fn main() {
         .add_systems(Update, (
             world::chunk::debug_chunk_system,
         ).in_set(SimulationSet::Debug))
+        .add_systems(Update, (
+            memory_management_system,
+            clear_agent_tick_events,
+        ).after(SimulationSet::Debug))
         .configure_sets(Update, (
             SimulationSet::WorldGeneration,
             SimulationSet::AgentProcessing,

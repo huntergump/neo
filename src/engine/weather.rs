@@ -48,7 +48,11 @@ impl Plugin for WeatherPlugin {
         app
             .add_event::<WeatherChanged>()
             .add_systems(Startup, spawn_weather_system)
-            .add_systems(Update, (update_weather_system, process_weather_changes));
+            .add_systems(Update, (
+                update_weather_system, 
+                process_weather_changes,
+                clear_weather_events,
+            ));
     }
 }
 
@@ -139,6 +143,14 @@ pub fn process_weather_changes(
             event.temperature, event.humidity, event.wind_speed, event.precipitation, event.cloud_cover
         );
     }
+}
+
+/// System that clears old weather events to prevent memory leaks
+pub fn clear_weather_events(
+    mut events: ResMut<Events<WeatherChanged>>,
+) {
+    // Clear all events after they've been processed
+    events.clear();
 }
 
 #[cfg(test)]

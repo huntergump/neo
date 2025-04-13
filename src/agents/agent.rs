@@ -6,6 +6,12 @@ use super::{message::Message, job::Job};
 use crate::SimulationConfig;
 use rand::random;
 
+/// Maximum number of messages to keep in an agent's message queue
+const MAX_MESSAGE_QUEUE_SIZE: usize = 100;
+
+/// Maximum number of memory entries to keep
+const MAX_MEMORY_ENTRIES: usize = 1000;
+
 /// Represents an agent in the simulation
 /// 
 /// Agents are autonomous entities that can:
@@ -98,11 +104,50 @@ impl Agent {
 
         // Process perceptions (to be implemented)
         self.process_perceptions();
+        
+        // Clean up old messages if queue is too large
+        self.cleanup_message_queue();
+        
+        // Clean up old memory entries
+        self.cleanup_memory();
 
         if self.tick_count % 100 == 0 {
             info!("Agent {} ticked. Tick #: {}", self.name, self.tick_count);
         } else {
             debug!("Agent {} ticked. Tick #: {}", self.name, self.tick_count);
+        }
+    }
+
+    /// Cleans up the message queue to prevent unbounded growth
+    fn cleanup_message_queue(&mut self) {
+        if self.message_queue.len() > MAX_MESSAGE_QUEUE_SIZE {
+            // Remove oldest messages to get back to the maximum size
+            let excess = self.message_queue.len() - MAX_MESSAGE_QUEUE_SIZE;
+            for _ in 0..excess {
+                self.message_queue.pop_front();
+            }
+            debug!("Agent {} message queue cleaned up, removed {} old messages", self.name, excess);
+        }
+    }
+
+    /// Cleans up old memory entries to prevent unbounded growth
+    fn cleanup_memory(&mut self) {
+        if self.memory.len() > MAX_MEMORY_ENTRIES {
+            // Get all keys and sort them by numeric suffix to remove oldest entries
+            let mut keys: Vec<String> = self.memory.keys().cloned().collect();
+            keys.sort_by(|a, b| {
+                // Extract numeric part from keys like "message_123" or "observation_456"
+                let a_num = a.split('_').last().and_then(|s| s.parse::<u32>().ok()).unwrap_or(0);
+                let b_num = b.split('_').last().and_then(|s| s.parse::<u32>().ok()).unwrap_or(0);
+                a_num.cmp(&b_num)
+            });
+            
+            // Remove oldest entries
+            let excess = self.memory.len() - MAX_MEMORY_ENTRIES;
+            for key in keys.iter().take(excess) {
+                self.memory.remove(key);
+            }
+            debug!("Agent {} memory cleaned up, removed {} old entries", self.name, excess);
         }
     }
 
